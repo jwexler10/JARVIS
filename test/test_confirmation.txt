@@ -1,0 +1,5 @@
+This is a test file for Phase 5A confirmation testing.
+
+This file was created to test the path whitelisting and confirmation prompts for destructive file operations.
+
+You can safely delete this file as part of testing the confirmation flow.
