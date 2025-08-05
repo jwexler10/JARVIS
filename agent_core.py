@@ -597,7 +597,7 @@ def chat_with_agent(conversation_history: list, user_input: str) -> str:
                         }
                         response = "I found multiple pages:\n" + "\n".join(
                             f"{i+1}. {u}" for i, u in enumerate(options)
-                        ) + "\nWhich one should I open? (Enter a number)"
+                        ) + "\nWhich one should I open? (Enter a number or 'all')"
                     else:
                         response = f"🌐 Web content:\n{result}"
                 else:
@@ -619,8 +619,23 @@ def chat_with_agent(conversation_history: list, user_input: str) -> str:
     
     # Handle disambiguation for web navigation
     if pending_action and pending_action.get("awaiting_disambiguation"):
-        choice = user_input.strip()
+        choice = user_input.strip().lower()
         candidates = pending_action.get("candidates", [])
+
+        if choice in ("all", "every", "each", "all of them"):
+            summaries = []
+            for url_option in candidates:
+                try:
+                    content = open_website(query=None, url=url_option, summary_only=True)
+                    summaries.append(f"{url_option}:\n{content}")
+                except Exception as e:
+                    summaries.append(f"{url_option}: Error {e}")
+            pending_action = None
+            combined = "\n\n".join(summaries)
+            response = f"🌐 Web content:\n\n{combined}"
+            conversation_history.append({"role": "assistant", "content": response})
+            return response
+
         # Try to parse as number
         chosen_url = None
         if choice.isdigit():
@@ -628,15 +643,15 @@ def chat_with_agent(conversation_history: list, user_input: str) -> str:
             if 0 <= idx < len(candidates):
                 chosen_url = candidates[idx]
         # Try to match URL or keyword
-        if not chosen_url:
+        if not chosen_url and choice:
             for candidate in candidates:
-                if choice.lower() in candidate.lower():
+                if choice in candidate.lower():
                     chosen_url = candidate
                     break
-        if not chosen_url:
-            prompt = "Sorry, please pick a number from the list or paste part of the URL."
-            conversation_history.append({"role": "assistant", "content": prompt})
-            return prompt
+        # Default to first candidate if still unresolved
+        if not chosen_url and candidates:
+            chosen_url = candidates[0]
+
         # Execute with chosen URL (always as url=, never as query=)
         pending_action = None
         try:
@@ -698,12 +713,23 @@ def chat_with_agent(conversation_history: list, user_input: str) -> str:
                 # Perform web research
                 try:
                     research_result = tools.open_website(query, question=specific_question)
-                    
+                    if isinstance(research_result, dict) and research_result.get("needs_disambiguation"):
+                        options = research_result["options"]
+                        summaries = []
+                        selected = options if "all" in user_input.lower() else [options[0]]
+                        for opt in selected:
+                            try:
+                                content = tools.open_website(query=None, url=opt)
+                                summaries.append(f"{opt}:\n{content}")
+                            except Exception as e:
+                                summaries.append(f"{opt}: Error {e}")
+                        research_result = "\n\n".join(summaries)
+
                     # Return the research result directly
                     conversation_history.append({"role": "user", "content": user_input})
                     conversation_history.append({"role": "assistant", "content": f"I've researched '{query}' for you:\n\n{research_result}"})
                     return f"I've researched '{query}' for you:\n\n{research_result}"
-                    
+
                 except Exception as e:
                     print(f"❌ Web research failed: {e}")
                     # Fall through to standard chat
@@ -786,7 +812,7 @@ def chat_with_agent(conversation_history: list, user_input: str) -> str:
                     }
                     prompt = "I found multiple pages:\n" + "\n".join(
                         f"{i+1}. {u}" for i, u in enumerate(options)
-                    ) + "\nWhich one should I open? (Enter a number)"
+                    ) + "\nWhich one should I open? (Enter a number or 'all')"
                     conversation_history.append({"role": "user", "content": user_input})
                     conversation_history.append({"role": "assistant", "content": prompt})
                     return prompt
@@ -820,6 +846,17 @@ def chat_with_agent(conversation_history: list, user_input: str) -> str:
             print(f"🌐 Performing web research for: {query}")
             try:
                 research_result = tools.open_website(query, question=question)
+                if isinstance(research_result, dict) and research_result.get("needs_disambiguation"):
+                    options = research_result["options"]
+                    summaries = []
+                    selected = options if "all" in user_input.lower() else [options[0]]
+                    for opt in selected:
+                        try:
+                            content = tools.open_website(query=None, url=opt)
+                            summaries.append(f"{opt}:\n{content}")
+                        except Exception as e:
+                            summaries.append(f"{opt}: Error {e}")
+                    research_result = "\n\n".join(summaries)
                 conversation_history.append({"role": "user", "content": user_input})
                 conversation_history.append({"role": "assistant", "content": f"🔍 Web research results:\n\n{research_result}"})
                 return f"🔍 Web research results:\n\n{research_result}"
