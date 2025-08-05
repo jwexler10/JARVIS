@@ -905,19 +905,28 @@ def open_website(
     summary_only: bool = True
 ) -> Union[str, dict]:
     """
-    1) If url given, use it. Else DDG-search(query) → top_k URLs.
+    1) If url given, use it. If query looks like a URL, treat it as the url.
+       Otherwise DDG-search(query) → top_k URLs.
     2) Try quick scrape: open_page_sandbox + extract_text_sandbox('body').
     3) If the result is too short (<500 chars) or not on-query-domain, FALLBACK:
        - Build a mini sandbox workflow to click through search results, then rescrape.
     4) Return summary (or full text) or a disambiguation dict if multiple candidates.
     """
     from search import search_web
-    
+
+    # If the query itself looks like a URL, treat it as such
+    if query and not url:
+        if re.match(r"^https?://", query) or query.startswith("www."):
+            url = query if re.match(r"^https?://", query) else f"https://{query}"
+            query = None
+
     # 1) Gather candidate URLs
     candidates: List[str] = []
-    
+
     # If URL is provided, use it directly (skip search entirely)
-    if url and re.match(r"^https?://", url):
+    if url:
+        if not re.match(r"^https?://", url):
+            url = f"https://{url}"
         candidates = [url]
         print(f"🌐 Using provided URL: {url}")
     elif query:
@@ -962,9 +971,9 @@ def open_website(
     try:
         open_page_sandbox(chosen)
         full_text = extract_text_sandbox("body") or ""
-        
+
         # If too short or clearly unrelated, fallback to search UI workflow
-        if len(full_text) < 500 or query.lower() not in full_text.lower():
+        if len(full_text) < 500 or (query and query.lower() not in full_text.lower()):
             print(f"⚠️ Quick scrape insufficient ({len(full_text)} chars), trying search UI fallback...")
             
             # Build a sandbox workflow to click the first result in the search UI
