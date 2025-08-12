@@ -1,0 +1,11 @@
+AI agents and AI-ready data are the two fastest advancing technologies on the 2025 Gartner Hype Cycle for Artificial Intelligence, according to Gartner, Inc., a business and technology insights company. These technologies are experiencing heightened interest this year, accompanied by ambitious projections and speculative promises, placing them at the Peak of Inflated Expectations.
+
+Among the AI innovations Gartner expects will reach mainstream adoption within the next 5 years, multimodal AI and AI trust, risk and security management (TRiSM) have been identified as dominating the Peak of Inflated Expectations. Together, these developments will enable more robust, innovative and responsible AI applications, transforming how businesses and organizations operate.
+
+AI Agents: AI agents are autonomous or semiautonomous software entities that use AI techniques to perceive, make decisions, take actions and achieve goals in their digital or physical environments. Using AI practices and techniques such as LLMs, organizations are creating and deploying AI agents to achieve complex tasks.
+
+AI Ready Data: AI-ready data ensures datasets are optimized for AI applications, enhancing accuracy and efficiency. Readiness is determined through the data’s ability to prove its fitness for use for specific AI use cases.
+
+Multimodal AI: Multimodal AI models are trained with multiple types of data simultaneously, such as images, video, audio and text. By integrating and analyzing diverse data sources, they can better understand complex situations better than models that use only one type of data.
+
+AI TRiSM: AI TRiSM plays a crucial role in ensuring ethical and secure AI deployment. It comprises four layers of technical capabilities that support enterprise policies for all AI use cases and help assure AI governance, trustworthiness, fairness, safety, reliability, security, privacy and data protection. 

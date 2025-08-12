@@ -9,6 +9,19 @@ import tools
 from tools import summarize_text, get_file_preview, run_file_workflow, create_directory, list_files_by_pattern, interpret_intent, open_website
 from search import search_web, search_fandom_specific
 
+def try_music_short_circuit(user_text: str) -> tuple[bool, str]:
+    """Return (routed, message) if music_router handles this command."""
+    try:
+        from music_router import is_music_command as _mr_is_music, route_music_command as _mr_route
+        if _mr_is_music(user_text):
+            _r = _mr_route(user_text)
+            if _r and _r.get("routed"):
+                return True, _r.get("message", "🎵 Playing music")
+            return True, "❌ Music command detected but routing failed. Please try again."
+    except Exception as _e:
+        print(f"⚠️ agent_core music short-circuit error: {_e}")
+    return False, ""
+
 # 1) JSON schema definitions for each tool
 tool_schemas = [
     {
@@ -941,6 +954,11 @@ def chat_with_agent_enhanced(conversation_history: list, user_input: str) -> str
     Phase 3B: Disambiguation & Conversational State
     """
     global pending_action
+    
+    # Short-circuit music before any GPT path
+    routed, msg = try_music_short_circuit(user_input)
+    if routed:
+        return msg
     
     # Load API key and create OpenAI client
     with open("config.json") as f:
